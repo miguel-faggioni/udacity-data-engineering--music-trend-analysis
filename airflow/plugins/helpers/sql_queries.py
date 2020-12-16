@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS public.staging_charts (
 );
 
 CREATE TABLE IF NOT EXISTS public.staging_songs (
-	num_songs int4,
 	artist_id varchar(256),
 	artist_name varchar(256),
 	artist_latitude numeric(18,0),
