@@ -10,7 +10,7 @@ import billboard
 
 class LoadBillboardOperator(BaseOperator):
     sql_query = """
-        INSERT INTO "{}" (rank,song_name,artist_name,year)
+        INSERT INTO "{}" (song_rank,song_name,artist_name,chart_year,chart_title)
         VALUES {}
     """
     ui_color = '#B19FBD'
@@ -31,15 +31,23 @@ class LoadBillboardOperator(BaseOperator):
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
+        self.year = context.get('execution_date').year
+        
         if(self.delete_before_insert == True):
             self.log.info("Clearing data from destination Redshift table")
-            redshift.run("DELETE FROM {}".format(self.to_table))
+            redshift.run("DELETE FROM {} WHERE chart_year = '{}' AND chart_title = '{}'".format(self.to_table,self.year,chart.title.replace("'","\\'")))
 
         self.log.info("Getting chart from Billboard")
-        chart = billboard.ChartData(self.chart_name,year="{{ execution_date.year }}")
-
+        chart = billboard.ChartData(self.chart_name,year=self.year)
+        
         self.log.info("Copying data to table")
-        data_to_insert = [ '({},{},{},{})'.format(entry.rank,entry.title,entry.artist,chart.year) for entry in chart ]
+        data_to_insert = [ "('{}','{}','{}','{}','{}')".format(
+            entry.rank,
+            entry.title.replace("'","\\'"),
+            entry.artist.replace("'","\\'"),
+            chart.year,
+            chart.title.replace("'","\\'")
+        ) for entry in chart ]
         formatted_sql = self.sql_query.format(
             self.to_table,
             ','.join(data_to_insert)

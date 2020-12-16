@@ -32,7 +32,7 @@ config.read_file(open(CFG_FILE))
 
 default_args = {
     'owner': 'Miguel F.',
-    'start_date': datetime(2019, 1, 12),
+    'start_date': datetime(2006, 1, 1),
     """
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
@@ -47,7 +47,7 @@ dag = DAG(
     default_args=default_args,
     description='Load data from Billboard and Spotify into Redshift tables',
     schedule_interval=None,
-    #schedule_interval='0 * * * *',
+    #schedule_interval='@yearly',
 )
 
 start_operator = DummyOperator(
@@ -81,12 +81,14 @@ stage_chart_to_redshift = LoadBillboardOperator(
     redshift_conn_id='redshift_credentials',
     to_table='staging_charts',
     delete_before_insert=False,
-    chart_name=config.get('BILLBOARD','chart_name')
+    chart_name=config.get('BILLBOARD','chart_name'),
+    provide_context=True
 )
 
 start_operator >> create_tables_on_redshift
-create_tables_on_redshift >> stage_songs_to_redshift
 create_tables_on_redshift >> stage_chart_to_redshift
+create_tables_on_redshift >> stage_songs_to_redshift
+
 
 """
 stage_events_to_redshift = StageToRedshiftOperator(
