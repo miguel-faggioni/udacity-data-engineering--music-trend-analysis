@@ -73,6 +73,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     s3_key=config.get('S3','song_folder'),
     json_path=config.get('S3','song_jsonpath'),
     delete_before_insert=False,
+    skip=True
 )
 
 stage_chart_to_redshift = LoadBillboardOperator(
@@ -82,7 +83,8 @@ stage_chart_to_redshift = LoadBillboardOperator(
     to_table='staging_charts',
     delete_before_insert=False,
     chart_name=config.get('BILLBOARD','chart_name'),
-    provide_context=True
+    provide_context=True,
+    skip=True
 )
 
 start_operator >> create_tables_on_redshift

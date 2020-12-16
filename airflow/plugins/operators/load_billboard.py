@@ -21,14 +21,19 @@ class LoadBillboardOperator(BaseOperator):
                  delete_before_insert=False,
                  to_table="",
                  chart_name="",
+                 skip=False,
                  *args, **kwargs):
         super(LoadBillboardOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
         self.delete_before_insert = delete_before_insert
         self.to_table = to_table
         self.chart_name = chart_name
+        self.skip_task = skip
         
     def execute(self, context):
+        if self.skip_task == True:
+            return
+
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
         self.year = context.get('execution_date').year
