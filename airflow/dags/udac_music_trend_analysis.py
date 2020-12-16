@@ -46,8 +46,8 @@ dag = DAG(
     'udac_music_trend_analysis',
     default_args=default_args,
     description='Load data from Billboard and Spotify into Redshift tables',
-    schedule_interval=None,
-    #schedule_interval='@yearly',
+    #schedule_interval=None,
+    schedule_interval='@yearly'
 )
 
 start_operator = DummyOperator(

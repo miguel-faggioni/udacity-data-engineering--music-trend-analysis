@@ -31,6 +31,7 @@ class StageToRedshiftOperator(BaseOperator):
                  delimiter=",",
                  json_path="",
                  delete_before_insert=True,
+                 skip=False,
                  *args, **kwargs):
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
         self.aws_credentials_id = aws_credentials_id
@@ -42,8 +43,12 @@ class StageToRedshiftOperator(BaseOperator):
         self.delimiter = delimiter
         self.json_path = json_path
         self.delete_before_insert = delete_before_insert
+        self.skip_task = skip
         
     def execute(self, context):
+        if self.skip_task == True:
+            return
+        
         aws_hook = AwsHook(self.aws_credentials_id)
         credentials = aws_hook.get_credentials()
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
