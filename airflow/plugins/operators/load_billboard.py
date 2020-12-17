@@ -13,7 +13,7 @@ class LoadBillboardOperator(BaseOperator):
         INSERT INTO "{}" (song_rank,song_name,artist_name,chart_year,chart_title)
         VALUES {}
     """
-    ui_color = '#B19FBD'
+    ui_color = '#4F5980'
 
     @apply_defaults
     def __init__(self,

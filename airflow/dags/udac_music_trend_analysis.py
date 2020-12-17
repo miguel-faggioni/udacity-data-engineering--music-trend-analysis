@@ -23,6 +23,7 @@ from airflow.operators import (
     DataQualityOperator,
     LoadBillboardOperator,
     LoadSpotifyOperator,
+    LoadGeniusOperator,
 )
 from helpers import SqlQueries
 import configparser
@@ -73,8 +74,8 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     s3_bucket=config.get('S3','bucket'),
     s3_key=config.get('S3','song_folder'),
     json_path=config.get('S3','song_jsonpath'),
-    delete_before_insert=False,
-    skip=True
+    delete_before_insert=False,#TODO True
+    skip=True#TODO False
 )
 
 stage_chart_to_redshift = LoadBillboardOperator(
@@ -82,10 +83,10 @@ stage_chart_to_redshift = LoadBillboardOperator(
     dag=dag,
     redshift_conn_id='redshift_credentials',
     to_table='staging_charts',
-    delete_before_insert=False,
+    delete_before_insert=False,#TODO True
     chart_name=config.get('BILLBOARD','chart_name'),
     provide_context=True,
-    skip=True
+    skip=True#TODO False
 )
 
 stage_features_to_redshift = LoadSpotifyOperator(
@@ -98,6 +99,18 @@ stage_features_to_redshift = LoadSpotifyOperator(
     provide_context=True,
     spotify_client_id=config.get('SPOTIFY','client_id'),
     spotify_client_secret=config.get('SPOTIFY','client_secret'),
+    skip=True#TODO False
+)
+
+stage_lyrics_to_redshift = LoadGeniusOperator(
+    task_id='Stage_lyrics',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    to_table='staging_lyrics',
+    delete_before_insert=False,
+    chart_name=config.get('BILLBOARD','chart_name'),
+    provide_context=True,
+    genius_access_token=config.get('GENIUS','client_token'),
     skip=False
 )
 
@@ -105,6 +118,7 @@ start_operator >> create_tables_on_redshift
 create_tables_on_redshift >> stage_chart_to_redshift
 create_tables_on_redshift >> stage_songs_to_redshift
 stage_chart_to_redshift >> stage_features_to_redshift
+stage_chart_to_redshift >> stage_lyrics_to_redshift
 
 """
 load_songplays_table = LoadFactOperator(

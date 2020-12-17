@@ -71,6 +71,12 @@ CREATE TABLE IF NOT EXISTS public.staging_features (
         valence numeric(32,16),
         time_signature int4
 );
+
+CREATE TABLE IF NOT EXISTS public.staging_lyrics (
+        artist_name varchar(256),
+        song_name varchar(256),
+        lyrics varchar(65535)
+);
     """)
     
     chart_table_insert = ("""

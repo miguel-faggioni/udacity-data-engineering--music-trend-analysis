@@ -4,6 +4,7 @@ from operators.load_dimension import LoadDimensionOperator
 from operators.data_quality import DataQualityOperator
 from operators.load_billboard import LoadBillboardOperator
 from operators.load_spotify import LoadSpotifyOperator
+from operators.load_genius import LoadGeniusOperator
 
 __all__ = [
     'StageToRedshiftOperator',
@@ -11,5 +12,6 @@ __all__ = [
     'LoadDimensionOperator',
     'DataQualityOperator',
     'LoadBillboardOperator',
-    'LoadSpotifyOperator'
+    'LoadSpotifyOperator',
+    'LoadGeniusOperator'
 ]
