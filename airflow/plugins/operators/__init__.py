@@ -3,11 +3,13 @@ from operators.load_fact import LoadFactOperator
 from operators.load_dimension import LoadDimensionOperator
 from operators.data_quality import DataQualityOperator
 from operators.load_billboard import LoadBillboardOperator
+from operators.load_spotify import LoadSpotifyOperator
 
 __all__ = [
     'StageToRedshiftOperator',
     'LoadFactOperator',
     'LoadDimensionOperator',
     'DataQualityOperator',
-    'LoadBillboardOperator'
+    'LoadBillboardOperator',
+    'LoadSpotifyOperator'
 ]

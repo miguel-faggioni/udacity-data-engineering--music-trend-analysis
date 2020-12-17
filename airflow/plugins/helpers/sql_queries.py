@@ -47,9 +47,33 @@ CREATE TABLE IF NOT EXISTS public.staging_songs (
 	duration numeric(18,0),
 	"year" int4
 );
+
+CREATE TABLE IF NOT EXISTS public.staging_features (
+        spotify_id varchar(256),
+        artist_name varchar(256),
+        song_name varchar(256),
+        duration numeric(28,10),
+        end_of_fade_in numeric(32,16),
+        start_of_fade_out numeric(32,16),
+        loudness numeric(32,16),
+        tempo numeric(32,16),
+        tempo_confidence numeric(32,16),
+        key int4,
+        key_confidence numeric(32,16),
+        mode int4,
+        mode_confidence numeric(32,16),
+        danceability numeric(32,16),
+        energy numeric(32,16),
+        speechiness numeric(32,16),
+        acousticness numeric(32,16),
+        instrumentalness numeric(32,16),
+        liveness numeric(32,16),
+        valence numeric(32,16),
+        time_signature int4
+);
     """)
     
-    songplay_table_insert = ("""
+    chart_table_insert = ("""
         SELECT
                 md5(events.sessionid || events.start_time) songplay_id,
                 events.start_time, 

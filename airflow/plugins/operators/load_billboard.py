@@ -51,7 +51,7 @@ class LoadBillboardOperator(BaseOperator):
             entry.title.replace("'","\\'"),
             entry.artist.replace("'","\\'"),
             chart.year,
-            chart.title.replace("'","\\'")
+            chart.name.replace("'","\\'")
         ) for entry in chart ]
         formatted_sql = self.sql_query.format(
             self.to_table,

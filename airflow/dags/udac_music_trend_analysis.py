@@ -21,7 +21,8 @@ from airflow.operators import (
     LoadFactOperator,
     LoadDimensionOperator,
     DataQualityOperator,
-    LoadBillboardOperator
+    LoadBillboardOperator,
+    LoadSpotifyOperator,
 )
 from helpers import SqlQueries
 import configparser
@@ -87,36 +88,25 @@ stage_chart_to_redshift = LoadBillboardOperator(
     skip=True
 )
 
+stage_features_to_redshift = LoadSpotifyOperator(
+    task_id='Stage_features',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    to_table='staging_features',
+    delete_before_insert=False,
+    chart_name=config.get('BILLBOARD','chart_name'),
+    provide_context=True,
+    spotify_client_id=config.get('SPOTIFY','client_id'),
+    spotify_client_secret=config.get('SPOTIFY','client_secret'),
+    skip=False
+)
+
 start_operator >> create_tables_on_redshift
 create_tables_on_redshift >> stage_chart_to_redshift
 create_tables_on_redshift >> stage_songs_to_redshift
-
+stage_chart_to_redshift >> stage_features_to_redshift
 
 """
-stage_events_to_redshift = StageToRedshiftOperator(
-    task_id='Stage_events',
-    dag=dag,
-    aws_credentials_id='aws_credentials',
-    redshift_conn_id='redshift_credentials',
-    table='staging_events',
-    columns='userid, ts, artist, firstname, lastname, gender, length, song, level, sessionid, location, useragent, page',
-    s3_bucket=config.get('S3','bucket'),
-    s3_key=config.get('S3','log_folder'),
-    json_path=config.get('S3','log_jsonpath')
-)
-
-stage_songs_to_redshift = StageToRedshiftOperator(
-    task_id='Stage_songs',
-    dag=dag,
-    aws_credentials_id='aws_credentials',
-    redshift_conn_id='redshift_credentials',
-    table='staging_songs',
-    columns='song_id, artist_id, artist_latitude, artist_longitude, artist_location, title, year, duration, artist_name',
-    s3_bucket=config.get('S3','bucket'),
-    s3_key=config.get('S3','song_folder'),
-    json_path=config.get('S3','song_jsonpath')
-)
-
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag,
