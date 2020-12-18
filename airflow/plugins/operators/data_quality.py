@@ -14,6 +14,7 @@ class DataQualityOperator(BaseOperator):
                  redshift_conn_id="",
                  sql_queries=[],
                  expected_values=[],
+                 continue_after_fail=False,
                  *args, **kwargs):
         super(DataQualityOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
@@ -21,14 +22,24 @@ class DataQualityOperator(BaseOperator):
             raise ValueError('Length of `sql_queries` and `expected_values` params must be equal')
         self.sql_queries = sql_queries
         self.expected_values = expected_values
-
+        self.continue_after_fail = continue_after_fail
+        
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
+        errors = []
         for check in zip(self.sql_queries,self.expected_values):
             self.log.info('Expecting {} as result from query: {}'.format(check[1], check[0]))
             result = redshift.get_records(check[0])
+            self.log.info('Got: {}'.format(result))
             if result != check[1]:
-                raise ValueError('Data quality check failed. Expected {} but got {}'.format(check[1],result))
+                error = 'Data quality check failed. Expected {} but got {}'.format(check[1],result)
+                if self.continue_after_fail == True:
+                    errors.append(error)
+                else:
+                    raise ValueError(error)
+
+        if errors:
+            raise ValueError(errors)
 
         self.log.info('Data quality check passed.')

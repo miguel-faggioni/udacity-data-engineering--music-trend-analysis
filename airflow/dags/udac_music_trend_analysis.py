@@ -144,7 +144,7 @@ load_song_dim_table = LoadDimensionOperator(
 )
 
 load_lyrics_dim_table = LoadDimensionOperator(
-    task_id='Load_lyricss_dim_table',
+    task_id='Load_lyrics_dim_table',
     dag=dag,
     redshift_conn_id='redshift_credentials',
     delete_before_insert=False,
@@ -161,6 +161,20 @@ load_song_feature_dim_table = LoadDimensionOperator(
     sql_select=SqlQueries.song_feature_table_insert
 )
 
+run_quality_checks = DataQualityOperator(
+    task_id='Run_data_quality_checks',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    sql_queries=SqlQueries.select_nulls_count,
+    expected_values=[ [(0,)] for x in SqlQueries.select_nulls_count ],
+    continue_after_fail=True
+)
+
+end_operator = DummyOperator(
+    task_id='Stop_execution',
+    dag=dag
+)
+
 start_operator >> create_tables_on_redshift
 create_tables_on_redshift >> stage_chart_to_redshift
 create_tables_on_redshift >> stage_songs_to_redshift
@@ -173,26 +187,8 @@ load_charts_table >> load_artist_dim_table
 load_charts_table >> load_song_feature_dim_table
 load_charts_table >> load_lyrics_dim_table
 load_charts_table >> load_song_dim_table
-
-"""
-
-run_quality_checks = DataQualityOperator(
-    task_id='Run_data_quality_checks',
-    dag=dag,
-    redshift_conn_id='redshift_credentials',
-    sql_queries=SqlQueries.select_nulls_count,
-    expected_values=[ [(0,)] for x in SqlQueries.select_nulls_count ]
-)
-
-end_operator = DummyOperator(
-    task_id='Stop_execution',
-    dag=dag
-)
-
 load_artist_dim_table >> run_quality_checks
 load_song_feature_dim_table >> run_quality_checks
 load_lyrics_dim_table >> run_quality_checks
 load_song_dim_table >> run_quality_checks
 run_quality_checks >> end_operator
-
-"""

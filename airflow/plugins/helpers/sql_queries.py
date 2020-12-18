@@ -206,17 +206,53 @@ class SqlQueries:
     """)
 
     select_nulls_count = (["""
-        SELECT SUM(CASE WHEN songid IS NULL THEN 1 ELSE 0 END) FROM songplays
+        SELECT SUM(CASE WHEN (song_id IS NULL OR artist_id IS NULL)THEN 1 ELSE 0 END) FROM charts
     ""","""
-        SELECT SUM(CASE WHEN artistid IS NULL THEN 1 ELSE 0 END) FROM songplays
+        SELECT COUNT(*)
+        FROM (
+            SELECT *
+            FROM charts
+            LEFT OUTER JOIN artists
+             ON charts.artist_id = artists.artist_id
+        ) missing_artists_on_charts
     ""","""
-        SELECT SUM(CASE WHEN userid IS NULL THEN 1 ELSE 0 END) FROM songplays
+        SELECT COUNT(*)
+        FROM (
+            SELECT *
+            FROM charts
+            LEFT OUTER JOIN songs
+             ON charts.song_id = songs.song_id
+        ) missing_songs_on_charts
     ""","""
-        SELECT SUM(CASE WHEN start_time IS NULL THEN 1 ELSE 0 END) FROM songplays
+        SELECT COUNT(*)
+        FROM (
+            SELECT *
+            FROM lyrics
+            LEFT OUTER JOIN artists
+             ON lyrics.artist_id = artists.artist_id
+        ) missing_artists_on_lyrics
     ""","""
-        SELECT SUM(CASE WHEN songid IS NULL THEN 1 ELSE 0 END) FROM songs
+        SELECT COUNT(*)
+        FROM (
+            SELECT *
+            FROM lyrics
+            LEFT OUTER JOIN songs
+             ON lyrics.song_id = songs.song_id
+        ) missing_songs_on_lyrics
     ""","""
-        SELECT SUM(CASE WHEN artistid IS NULL THEN 1 ELSE 0 END) FROM artists
+        SELECT COUNT(*)
+        FROM (
+            SELECT *
+            FROM song_features
+            LEFT OUTER JOIN artists
+             ON song_features.artist_id = artists.artist_id
+        ) missing_artists_on_song_features
     ""","""
-        SELECT SUM(CASE WHEN userid IS NULL THEN 1 ELSE 0 END) FROM users
+        SELECT COUNT(*)
+        FROM (
+            SELECT *
+            FROM song_features
+            LEFT OUTER JOIN songs
+             ON song_features.song_id = songs.song_id
+        ) missing_songs_on_song_features
     """])
