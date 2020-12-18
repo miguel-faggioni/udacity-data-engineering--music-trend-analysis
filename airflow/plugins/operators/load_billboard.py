@@ -10,7 +10,7 @@ import billboard
 
 class LoadBillboardOperator(BaseOperator):
     sql_query = """
-        INSERT INTO "{}" (song_rank,song_name,artist_name,chart_year,chart_title)
+        INSERT INTO "{}" (song_rank,song_name,artist_name,chart_year,chart_title,chart_name)
         VALUES {}
     """
     ui_color = '#4F5980'
@@ -46,12 +46,13 @@ class LoadBillboardOperator(BaseOperator):
         chart = billboard.ChartData(self.chart_name,year=self.year)
         
         self.log.info("Copying data to table")
-        data_to_insert = [ "('{}','{}','{}','{}','{}')".format(
+        data_to_insert = [ "('{}','{}','{}','{}','{}','{}')".format(
             entry.rank,
             entry.title.replace("'","\\'"),
             entry.artist.replace("'","\\'"),
             chart.year,
-            chart.name.replace("'","\\'")
+            chart.name.replace("'","\\'"),
+            chart.title.replace("'","\\'")
         ) for entry in chart ]
         formatted_sql = self.sql_query.format(
             self.to_table,

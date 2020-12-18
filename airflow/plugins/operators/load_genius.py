@@ -113,7 +113,7 @@ class LoadGeniusOperator(BaseOperator):
                 count_most_common_usage = sum([ x[1] for x in collections.Counter(no_stops).most_common(self.most_common_count) ])
                 # analyse sentiment
                 lyrics_sentiment = sid.polarity_scores(sentence)
-                common_words_sentiment = sid.polarity_scores(' '.join(distinct_most_common))
+                common_words_sentiment = sid.polarity_scores(' '.join([ x[0] for x in collections.Counter(no_stops).most_common(self.most_common_count) ]))
                 common_words_sentiment_with_weights = sid.polarity_scores(' '.join([ ' '.join([x[0]]*x[1]) for x in collections.Counter(no_stops).most_common(self.most_common_count) ]))
                 
                 song_lyrics.append({
