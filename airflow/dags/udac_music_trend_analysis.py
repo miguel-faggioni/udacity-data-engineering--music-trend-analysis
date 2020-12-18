@@ -117,56 +117,64 @@ stage_lyrics_to_redshift = LoadGeniusOperator(
     select_limit=10
 )
 
+load_charts_table = LoadFactOperator(
+    task_id='Load_charts_fact_table',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    to_table='charts',
+    sql_select=SqlQueries.chart_table_insert
+)
+
+load_artist_dim_table = LoadDimensionOperator(
+    task_id='Load_artists_dim_table',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    delete_before_insert=False,
+    to_table='artists',
+    sql_select=SqlQueries.artist_table_insert
+)
+
+load_song_dim_table = LoadDimensionOperator(
+    task_id='Load_songs_dim_table',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    delete_before_insert=False,
+    to_table='songs',
+    sql_select=SqlQueries.song_table_insert
+)
+
+load_lyrics_dim_table = LoadDimensionOperator(
+    task_id='Load_lyricss_dim_table',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    delete_before_insert=False,
+    to_table='lyrics',
+    sql_select=SqlQueries.lyrics_table_insert
+)
+
+load_song_feature_dim_table = LoadDimensionOperator(
+    task_id='Load_song_features_dim_table',
+    dag=dag,
+    redshift_conn_id='redshift_credentials',
+    delete_before_insert=False,
+    to_table='song_features',
+    sql_select=SqlQueries.song_feature_table_insert
+)
+
 start_operator >> create_tables_on_redshift
 create_tables_on_redshift >> stage_chart_to_redshift
 create_tables_on_redshift >> stage_songs_to_redshift
 stage_chart_to_redshift >> stage_features_to_redshift
 stage_chart_to_redshift >> stage_lyrics_to_redshift
+stage_lyrics_to_redshift >> load_charts_table
+stage_features_to_redshift >> load_charts_table
+stage_songs_to_redshift >> load_charts_table
+load_charts_table >> load_artist_dim_table
+load_charts_table >> load_song_feature_dim_table
+load_charts_table >> load_lyrics_dim_table
+load_charts_table >> load_song_dim_table
 
 """
-load_songplays_table = LoadFactOperator(
-    task_id='Load_songplays_fact_table',
-    dag=dag,
-    redshift_conn_id='redshift_credentials',
-    to_table="songplays",
-    sql_select=SqlQueries.songplay_table_insert
-)
-
-load_user_dimension_table = LoadDimensionOperator(
-    task_id='Load_user_dim_table',
-    dag=dag,
-    delete_before_insert=True,
-    redshift_conn_id='redshift_credentials',
-    to_table="users",
-    sql_select=SqlQueries.user_table_insert
-)
-
-load_song_dimension_table = LoadDimensionOperator(
-    task_id='Load_song_dim_table',
-    dag=dag,
-    delete_before_insert=True,
-    redshift_conn_id='redshift_credentials',
-    to_table="songs",
-    sql_select=SqlQueries.song_table_insert
-)
-
-load_artist_dimension_table = LoadDimensionOperator(
-    task_id='Load_artist_dim_table',
-    dag=dag,
-    delete_before_insert=True,
-    redshift_conn_id='redshift_credentials',
-    to_table="artists",
-    sql_select=SqlQueries.artist_table_insert
-)
-
-load_time_dimension_table = LoadDimensionOperator(
-    task_id='Load_time_dim_table',
-    dag=dag,
-    delete_before_insert=True,
-    redshift_conn_id='redshift_credentials',
-    to_table="time",
-    sql_select=SqlQueries.time_table_insert
-)
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
@@ -180,4 +188,11 @@ end_operator = DummyOperator(
     task_id='Stop_execution',
     dag=dag
 )
+
+load_artist_dim_table >> run_quality_checks
+load_song_feature_dim_table >> run_quality_checks
+load_lyrics_dim_table >> run_quality_checks
+load_song_dim_table >> run_quality_checks
+run_quality_checks >> end_operator
+
 """
