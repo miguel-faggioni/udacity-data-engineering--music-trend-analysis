@@ -75,7 +75,17 @@ CREATE TABLE IF NOT EXISTS public.staging_features (
 CREATE TABLE IF NOT EXISTS public.staging_lyrics (
         artist_name varchar(256),
         song_name varchar(256),
-        lyrics varchar(65535)
+        lyrics varchar(65535),
+        count_words int4,
+        count_no_stopwords int4,
+        count_distinct_words int4,
+        count_distinct_no_stopwords int4,
+        count_distinct_words_used_once int4,
+        distinct_most_common varchar(256),
+        count_most_common_usage int4,
+        lyrics_sentiment numeric(8,7),
+        common_words_sentiment numeric(8,7),
+        common_words_sentiment_with_weights numeric(8,7)
 );
     """)
     

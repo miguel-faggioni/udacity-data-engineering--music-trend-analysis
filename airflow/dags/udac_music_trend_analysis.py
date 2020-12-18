@@ -111,7 +111,8 @@ stage_lyrics_to_redshift = LoadGeniusOperator(
     chart_name=config.get('BILLBOARD','chart_name'),
     provide_context=True,
     genius_access_token=config.get('GENIUS','client_token'),
-    skip=False
+    skip=False,
+    most_common_count=5
 )
 
 start_operator >> create_tables_on_redshift
