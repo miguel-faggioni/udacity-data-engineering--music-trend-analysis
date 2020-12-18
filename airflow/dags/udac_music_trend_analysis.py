@@ -99,7 +99,8 @@ stage_features_to_redshift = LoadSpotifyOperator(
     provide_context=True,
     spotify_client_id=config.get('SPOTIFY','client_id'),
     spotify_client_secret=config.get('SPOTIFY','client_secret'),
-    skip=True#TODO False
+    skip=True,#TODO False
+    select_limit=10
 )
 
 stage_lyrics_to_redshift = LoadGeniusOperator(
@@ -111,8 +112,9 @@ stage_lyrics_to_redshift = LoadGeniusOperator(
     chart_name=config.get('BILLBOARD','chart_name'),
     provide_context=True,
     genius_access_token=config.get('GENIUS','client_token'),
-    skip=False,
-    most_common_count=5
+    skip=True,#TODO False
+    most_common_count=5,
+    select_limit=10
 )
 
 start_operator >> create_tables_on_redshift

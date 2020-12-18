@@ -34,6 +34,7 @@ class LoadGeniusOperator(BaseOperator):
                  genius_access_token="",
                  select_sql="",
                  most_common_count=1,
+                 select_limit=None,
                  *args, **kwargs):
         super(LoadGeniusOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
@@ -44,6 +45,7 @@ class LoadGeniusOperator(BaseOperator):
         self.genius_access_token = genius_access_token
         self.select_sql = select_sql
         self.most_common_count = most_common_count
+        self.select_limit = select_limit
         
     def execute(self, context):
         if self.skip_task == True:
@@ -60,6 +62,10 @@ class LoadGeniusOperator(BaseOperator):
             redshift.run("DELETE FROM {}".format(self.to_table))
 
         self.log.info("Getting songs to query their lyrics")
+        if self.select_limit is not None:
+            select_limit = "LIMIT {}".format(self.select_limit)
+        else:
+            select_limit = ""
         select_query = """
            SELECT
                   artist_name AS artist,
@@ -67,8 +73,8 @@ class LoadGeniusOperator(BaseOperator):
              FROM staging_charts
             WHERE chart_year = '{}'
               AND chart_title = '{}'
-LIMIT 10 -- TODO remover limit
-        """.format(self.year,self.chart_name.replace("'","\\'"))
+            {}
+        """.format(self.year,self.chart_name.replace("'","\\'"),select_limit)
         song_list = redshift.get_records(select_query)
         self.log.info("Querying lyrics for {} tracks".format(len(song_list)))
 
