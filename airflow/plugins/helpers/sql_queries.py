@@ -226,49 +226,61 @@ class SqlQueries:
     ""","""
         SELECT COUNT(*)
         FROM (
-            SELECT *
+            SELECT artist_id
             FROM charts
-            LEFT OUTER JOIN artists
-             ON charts.artist_id = artists.artist_id
+            WHERE artist_id NOT IN (
+                SELECT artist_id
+                FROM artists
+            )
         ) missing_artists_on_charts
     ""","""
         SELECT COUNT(*)
         FROM (
             SELECT *
             FROM charts
-            LEFT OUTER JOIN songs
-             ON charts.song_id = songs.song_id
+            WHERE song_id NOT IN (
+                SELECT song_id
+                FROM songs
+            )
         ) missing_songs_on_charts
     ""","""
         SELECT COUNT(*)
         FROM (
             SELECT *
             FROM lyrics
-            LEFT OUTER JOIN artists
-             ON lyrics.artist_id = artists.artist_id
+            WHERE artist_id NOT IN (
+                SELECT artist_id
+                FROM artists
+            )
         ) missing_artists_on_lyrics
     ""","""
         SELECT COUNT(*)
         FROM (
             SELECT *
             FROM lyrics
-            LEFT OUTER JOIN songs
-             ON lyrics.song_id = songs.song_id
+            WHERE song_id NOT IN (
+                SELECT song_id
+                FROM songs
+            )
         ) missing_songs_on_lyrics
     ""","""
         SELECT COUNT(*)
         FROM (
             SELECT *
             FROM song_features
-            LEFT OUTER JOIN artists
-             ON song_features.artist_id = artists.artist_id
+            WHERE artist_id NOT IN (
+                SELECT artist_id
+                FROM artists
+            )
         ) missing_artists_on_song_features
     ""","""
         SELECT COUNT(*)
         FROM (
             SELECT *
             FROM song_features
-            LEFT OUTER JOIN songs
-             ON song_features.song_id = songs.song_id
+            WHERE song_id NOT IN (
+                SELECT song_id
+                FROM songs
+            )
         ) missing_songs_on_song_features
     """])
