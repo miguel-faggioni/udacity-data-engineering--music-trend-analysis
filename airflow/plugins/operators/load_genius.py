@@ -1,5 +1,12 @@
 """
-The load Genius operator receives a parameter defining an SQL query to get the list of song and artist names whose features will be queried.
+The LoadGeniusOperator gets the `execution_year` from the context, and a Billboard chart name from the parameters; these are used to query the `staging_charts` table to get the songs that were inserted and w\
+hose track features should be queried.
+
+The operator then uses the `lyricsgenius` python lib to get the lyrics of the track.
+
+Then the `nltk` python lib is used to derive more information from the lyrics of the track, such as overall sentiment, word count, unique word count, and most used words.
+
+Afterwards the information is inserted into the table whose name was received in the parameters.
 
 There is also an optional parameter that allows switching between insert modes when loading the data. The default behaviour is append-only.
 """
@@ -32,7 +39,6 @@ class LoadGeniusOperator(BaseOperator):
                  chart_name="",
                  skip=False,
                  genius_access_token="",
-                 select_sql="",
                  most_common_count=1,
                  select_limit=None,
                  *args, **kwargs):
@@ -43,7 +49,6 @@ class LoadGeniusOperator(BaseOperator):
         self.chart_name = chart_name
         self.skip_task = skip
         self.genius_access_token = genius_access_token
-        self.select_sql = select_sql
         self.most_common_count = most_common_count
         self.select_limit = select_limit
         

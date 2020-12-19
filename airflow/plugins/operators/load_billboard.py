@@ -1,5 +1,9 @@
 """
-The load Billboard operator receives a parameter defining which billboard chart to be loaded, as well as from which year to load.
+The LoadBillboardOperator gets the `execution_year` from the context, and a Billboard chart name from the parameters.
+
+The operator then uses the `billboard` python lib to get the rankings for the given year and chart.
+
+The rankings are inserted into a table whose name is received as a parameter.
 
 There is also an optional parameter that allows switching between insert modes when loading the data. The default behaviour is append-only.
 """

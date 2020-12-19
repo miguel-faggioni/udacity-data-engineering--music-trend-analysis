@@ -1,5 +1,10 @@
 """
-The load Spotify operator receives a parameter defining an SQL query to get the list of song and artist names whose features will be queried.
+The LoadSpotifyOperator gets the `execution_year` from the context, and a Billboard chart name from the parameters; these are used to query the `staging_charts` table to get the songs that were inserted and \
+whose track features should be queried.
+
+The operator then uses the `spotipy` python lib to search for the songs and get their ID on Spotify, which is subsequently used to get the tracks' features and analysis.
+
+The values are then inserted into the table whose name was received in the parameters.
 
 There is also an optional parameter that allows switching between insert modes when loading the data. The default behaviour is append-only.
 """
@@ -25,7 +30,6 @@ class LoadSpotifyOperator(BaseOperator):
                  skip=False,
                  spotify_client_id="",
                  spotify_client_secret="",
-                 select_sql="",
                  select_limit=None,
                  *args, **kwargs):
         super(LoadSpotifyOperator, self).__init__(*args, **kwargs)
@@ -36,7 +40,6 @@ class LoadSpotifyOperator(BaseOperator):
         self.skip_task = skip
         self.spotify_client_id = spotify_client_id
         self.spotify_client_secret = spotify_client_secret
-        self.select_sql = select_sql
         self.select_limit = select_limit
         
     def execute(self, context):

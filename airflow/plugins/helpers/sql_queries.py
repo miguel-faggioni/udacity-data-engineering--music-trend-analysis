@@ -143,23 +143,39 @@ class SqlQueries:
     """)
 
     song_table_insert = ("""
-        SELECT
+        (SELECT
                md5( concat(title, artist_name) ) AS song_id,
                title,
                md5( artist_name ) AS artist_id,
                year,
                duration
-        FROM staging_songs
+        FROM staging_songs)
+        UNION
+        (SELECT
+               md5( concat(song_name, artist_name) ) AS song_id,
+               song_name AS title,
+               md5( artist_name ) AS artist_id,
+               NULL AS year,
+               0 AS duration
+        FROM staging_charts)
     """)
 
     artist_table_insert = ("""
-        SELECT
+        (SELECT
                md5( artist_name ) AS artist_id,
                artist_name,
                artist_location,
                artist_latitude,
                artist_longitude
-        FROM staging_songs
+        FROM staging_songs)
+        UNION
+        (SELECT
+               md5( artist_name ) AS artist_id,
+               artist_name,
+               NULL AS artist_location,
+               0 AS artist_latitude,
+               0 AS artist_longitude
+        FROM staging_charts)
     """)
 
     lyrics_table_insert = ("""

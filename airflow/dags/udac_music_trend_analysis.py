@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-This file contains an AirFlow DAG to load data from an S3 bucket into Redshift tables. The steps taken are as follows:
+This file contains an AirFlow DAG to load data into Redshift tables from an S3 bucket, and 3 APIs. The steps taken are as follows:
 
-  1. Copy the data from the S3 bucket to 2 staging tables on Redshift.
-  2. Copy the facts to a table on Redshift.
-  3. Copy the dimensions to 4 tables on Redshift.
-  4. Check the quality of the data copied.
+  1. Copy the data from the S3 bucket to a staging table on Redshift.
+  2. Query the 1st API into another staging table on Redshift.
+  3. Query the 2nd and 3rd API into another 2 staging tables on Redshift.
+  4. Copy the facts to a table on Redshift.
+  5. Copy the dimensions to 4 tables on Redshift.
+  6. Check the quality of the data copied.
 
-The configurations are loaded from `dp.cfg`, where the S3 bucket name and folders are stored.
+The configurations are loaded from `aws.cfg`, where the S3 bucket name and folders are stored, as well as the keys needed to access the APIs.
 """
 
 from datetime import datetime, timedelta
@@ -34,11 +36,9 @@ config.read_file(open(CFG_FILE))
 
 default_args = {
     'owner': 'Miguel F.',
-    'start_date': datetime(2006, 1, 1),
-    """
+    'start_date': datetime(2019, 1, 1),
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
-    """
     'email_on_failure': False,
     'depends_on_past': False,
     'catchup': False
@@ -48,7 +48,6 @@ dag = DAG(
     'udac_music_trend_analysis',
     default_args=default_args,
     description='Load data from Billboard and Spotify into Redshift tables',
-    #schedule_interval=None,
     schedule_interval='@yearly'
 )
 
@@ -74,8 +73,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     s3_bucket=config.get('S3','bucket'),
     s3_key=config.get('S3','song_folder'),
     json_path=config.get('S3','song_jsonpath'),
-    delete_before_insert=False,#TODO True
-    skip=True#TODO False
+    delete_before_insert=True
 )
 
 stage_chart_to_redshift = LoadBillboardOperator(
@@ -83,10 +81,9 @@ stage_chart_to_redshift = LoadBillboardOperator(
     dag=dag,
     redshift_conn_id='redshift_credentials',
     to_table='staging_charts',
-    delete_before_insert=False,#TODO True
+    delete_before_insert=False,
     chart_name=config.get('BILLBOARD','chart_name'),
-    provide_context=True,
-    skip=True#TODO False
+    provide_context=True
 )
 
 stage_features_to_redshift = LoadSpotifyOperator(
@@ -98,9 +95,7 @@ stage_features_to_redshift = LoadSpotifyOperator(
     chart_name=config.get('BILLBOARD','chart_name'),
     provide_context=True,
     spotify_client_id=config.get('SPOTIFY','client_id'),
-    spotify_client_secret=config.get('SPOTIFY','client_secret'),
-    skip=True,#TODO False
-    select_limit=10
+    spotify_client_secret=config.get('SPOTIFY','client_secret')
 )
 
 stage_lyrics_to_redshift = LoadGeniusOperator(
@@ -112,9 +107,7 @@ stage_lyrics_to_redshift = LoadGeniusOperator(
     chart_name=config.get('BILLBOARD','chart_name'),
     provide_context=True,
     genius_access_token=config.get('GENIUS','client_token'),
-    skip=True,#TODO False
-    most_common_count=5,
-    select_limit=10
+    most_common_count=5
 )
 
 load_charts_table = LoadFactOperator(

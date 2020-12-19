@@ -1,5 +1,5 @@
 """
-The load fact operator received an SQL query to run data transformations. Most of the logic is within the SQL transformations and the operator also received the target database on which to run the query against. The target table that will contain the results of the transformation is also passed as a parameter to the operator.
+The load dimension operator received an SQL query to run data transformations. Most of the logic is within the SQL transformations and the operator also received the target database on which to run the query against. The target table that will contain the results of the transformation is also passed as a parameter to the operator.
 
 There is also an optional parameter that allows switching between insert modes when loading dimensions. The default behaviour is append-only.
 """
