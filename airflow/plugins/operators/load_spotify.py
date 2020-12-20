@@ -93,7 +93,20 @@ class LoadSpotifyOperator(BaseOperator):
         for tracks_block in chunks(spotify_ids, 100):
             features = sp.audio_features(tracks_block)
             for feature in features:
-                analysis = sp.audio_analysis(feature['uri'])
+                try:
+                    analysis = sp.audio_analysis(feature['uri'])
+                except:
+                    analysis = {
+                        'track': {
+                            'duration': 0,
+                            'end_of_fade_in': 0,
+                            'start_of_fade_out': 0,
+                            'tempo_confidence': 0,
+                            'key_confidence': 0,
+                            'mode_confidence': 0,
+                            'time_signature': 0
+                        }
+                    }
                 song_features.append({
                     'spotify_id': feature['id'],
                     'loudness': feature['loudness'],
@@ -115,7 +128,10 @@ class LoadSpotifyOperator(BaseOperator):
                     'mode_confidence': analysis['track']['mode_confidence'],
                     'time_signature': analysis['track']['time_signature'],
                 })
-            
+
+        if len(song_features) == 0:
+            return
+                
         self.log.info("Copying data to table")
         data_to_insert = [ ("("+",".join((2+len(feature))*["'{}'"])+")").format(
             feature['spotify_id'],
@@ -140,8 +156,12 @@ class LoadSpotifyOperator(BaseOperator):
             feature['mode_confidence'],
             feature['time_signature'],
         ) for (feature,song) in zip(song_features,song_list) ]
-        formatted_sql = self.sql_query.format(
-            self.to_table,
-            ','.join(data_to_insert)
-        )
-        redshift.run(formatted_sql)
+
+        if len(data_to_insert) > 0:
+            formatted_sql = self.sql_query.format(
+                self.to_table,
+                ','.join(data_to_insert)
+            )
+            redshift.run(formatted_sql)
+        else:
+            self.log.info("No data to be copied")

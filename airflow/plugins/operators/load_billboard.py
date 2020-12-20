@@ -44,7 +44,7 @@ class LoadBillboardOperator(BaseOperator):
         
         if(self.delete_before_insert == True):
             self.log.info("Clearing data from destination Redshift table")
-            redshift.run("DELETE FROM {} WHERE chart_year = '{}' AND chart_title = '{}'".format(self.to_table,self.year,chart.title.replace("'","\\'")))
+            redshift.run("DELETE FROM {}".format(self.to_table))
 
         self.log.info("Getting chart from Billboard")
         chart = billboard.ChartData(self.chart_name,year=self.year)

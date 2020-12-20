@@ -158,6 +158,22 @@ class SqlQueries:
                NULL AS year,
                0 AS duration
         FROM staging_charts)
+        UNION
+        (SELECT
+               md5( concat(song_name, artist_name) ) AS song_id,
+               song_name AS title,
+               md5( artist_name ) AS artist_id,
+               NULL AS year,
+               0 AS duration
+        FROM staging_lyrics)
+        UNION
+        (SELECT
+               md5( concat(song_name, artist_name) ) AS song_id,
+               song_name AS title,
+               md5( artist_name ) AS artist_id,
+               NULL AS year,
+               0 AS duration
+        FROM staging_features)
     """)
 
     artist_table_insert = ("""
@@ -176,6 +192,22 @@ class SqlQueries:
                0 AS artist_latitude,
                0 AS artist_longitude
         FROM staging_charts)
+        UNION
+        (SELECT
+               md5( artist_name ) AS artist_id,
+               artist_name,
+               NULL AS artist_location,
+               0 AS artist_latitude,
+               0 AS artist_longitude
+        FROM staging_lyrics)
+        UNION
+        (SELECT
+               md5( artist_name ) AS artist_id,
+               artist_name,
+               NULL AS artist_location,
+               0 AS artist_latitude,
+               0 AS artist_longitude
+        FROM staging_features)
     """)
 
     lyrics_table_insert = ("""
