@@ -252,12 +252,13 @@
 #+BEGIN_SRC 
 /
 ├── data
-│   └── song_data - contains a subset of the Million Song Dataaset
-│       └── <first letter of song track ID>
-│           └── <second letter of song track ID>
-│               └── <third letter of song track ID>
-│                   ├── (...)
-│                   └── TR<track ID>.json
+│   ├── song_data - contains a subset of the Million Song Dataaset
+│   │   └── <first letter of song track ID>
+│   │       └── <second letter of song track ID>
+│   │           └── <third letter of song track ID>
+│   │               ├── (...)
+│   │               └── TR<track ID>.json
+│   └── result - contains SQL files to create and fill the tables with the results
 ├── airflow
 │   ├── create_tables.sql - SQL queries to create the necessary tables on Redshift
 │   ├── dags - Airflow DAGs for the project
@@ -576,3 +577,121 @@ ORDER BY year DESC;
    #+END_SRC
    
    The same query can be run to analyse other song features, such as danceability, tempo, key and beats per minute, depending on what is intended to be extracted.
+
+* Results
+
+  The `data/results/` folder contains the data obtained from running the ETL for the Hot 100 Songs of the years 2006 through 2020 in the form SQL files that will create and populate the tables.
+
+  The following query was used to extract the information present in this session while varying the `WHERE` clause to include less or more songs from each chart. The information is not a complete picture of the data, since some tracks did not have a Spotify ID (and therefore no song_features available) or did not have lyrics available on Genius (and therefore no lyrics available).
+
+   #+BEGIN_SRC sql
+ SELECT
+        charts.year,
+        CAST( AVG(lyrics.count_words) AS DECIMAL(6,2) ) AS avg_count_words,
+        CAST( AVG(lyrics.count_no_stopwords) AS DECIMAL(6,2) ) AS avg_count_no_stopwords,
+        CAST( AVG(lyrics.lyrics_sentiment) AS DECIMAL(6,2) ) AS avg_lyrics_sentiment,
+        CAST( AVG(song_features.tempo) AS DECIMAL(6,2) ) AS avg_bpm,
+        CAST( AVG(song_features.energy) AS DECIMAL(6,2) ) AS avg_energy,
+        CAST( AVG(song_features.valence) AS DECIMAL(6,2) ) AS avg_valence,
+        CAST( AVG(song_features.danceability) AS DECIMAL(6,2) ) AS avg_danceability
+ FROM charts
+ LEFT JOIN lyrics
+     ON lyrics.artist_id = charts.artist_id
+    AND lyrics.song_id = charts.song_id
+ LEFT JOIN song_features
+     ON song_features.artist_id = charts.artist_id
+    AND song_features.song_id = charts.song_id
+ WHERE charts.rank <= 5
+ GROUP BY charts.year
+ ORDER BY year DESC;
+   #+END_SRC
+
+   Each column's content is as follows:
+
+   - year - from which year of the Billboard chart the tracks were taken
+   - avg_count_words - average number of words on the lyrics
+   - avg_count_no_stopwords - average number of words on lyrics, after removing [[https://en.wikipedia.org/wiki/Stop_word][stopwords]] from it
+   - avg_bpm - average number of beats per minute
+   - avg_energy - average of the perceptual measure of intensity and activity. With more energetic tracks feeling fast, loud, and noisy (1.0).
+   - avg_valence - average of the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric) (1.0), while tracks with low valence sound more negative (e.g. sad, depressed, angry) (-1.0).
+   - avg_danceability - average of how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.
+
+** Top track of each year
+
+| year | avg_count_words | avg_count_no_stopwords | avg_lyrics_sentiment | avg_bpm | avg_energy | avg_valence | avg_danceability |
+|------+-----------------+------------------------+----------------------+---------+------------+-------------+------------------|
+| 2020 |          242.00 |                 119.00 |                -0.44 |  171.00 |       0.73 |        0.33 |             0.51 |
+| 2019 |                 |                        |                      |   89.91 |       0.47 |        0.91 |             0.76 |
+| 2018 |                 |                        |                      |   77.16 |       0.44 |        0.35 |             0.75 |
+| 2017 |                 |                        |                      |   83.96 |       0.50 |        0.57 |             0.73 |
+| 2016 |          435.00 |                 172.00 |                 0.98 |  100.41 |       0.37 |        0.51 |             0.60 |
+| 2015 |                 |                        |                      |   78.99 |       0.44 |        0.59 |             0.78 |
+| 2014 |          403.00 |                 206.00 |                 0.99 |  160.01 |       0.82 |        0.96 |             0.64 |
+| 2013 |                 |                        |                      |  136.24 |       0.78 |        0.23 |             0.44 |
+| 2012 |                 |                        |                      |  120.02 |       0.58 |        0.66 |             0.78 |
+| 2011 |                 |                        |                      |   98.46 |       0.73 |        0.45 |             0.64 |
+| 2010 |                 |                        |                      |  120.02 |       0.83 |        0.71 |             0.75 |
+| 2009 |                 |                        |                      |  130.05 |       0.74 |        0.20 |             0.83 |
+| 2008 |                 |                        |                      |  128.00 |       0.58 |        0.97 |             0.88 |
+| 2007 |                 |                        |                      |  175.86 |       0.69 |        0.50 |             0.44 |
+| 2006 |          382.00 |                 163.00 |                -0.99 |  140.04 |       0.78 |        0.52 |             0.59 |
+
+** Top 5 tracks of each year
+
+| year | avg_count_words | avg_count_no_stopwords | avg_lyrics_sentiment | avg_bpm | avg_energy | avg_valence | avg_danceability |
+|------+-----------------+------------------------+----------------------+---------+------------+-------------+------------------|
+| 2020 |          332.00 |                 176.00 |                 0.40 |  117.38 |       0.67 |        0.63 |             0.73 |
+| 2019 |          367.00 |                 173.00 |                 0.57 |  109.50 |       0.55 |        0.64 |             0.75 |
+| 2018 |          286.00 |                 126.00 |                 0.99 |  118.21 |       0.49 |        0.39 |             0.69 |
+| 2017 |          267.00 |                 139.00 |                 0.99 |  109.96 |       0.62 |        0.57 |             0.71 |
+| 2016 |          386.00 |                 159.00 |                 0.95 |  120.67 |       0.65 |        0.52 |             0.62 |
+| 2015 |          442.00 |                 224.00 |                 0.98 |  114.23 |       0.73 |        0.69 |             0.72 |
+| 2014 |          494.00 |                 243.00 |                -0.59 |  144.25 |       0.74 |        0.81 |             0.64 |
+| 2013 |          179.00 |                  96.00 |                 0.63 |  136.59 |       0.61 |        0.45 |             0.50 |
+| 2012 |          335.00 |                 140.00 |                -0.61 |  121.58 |       0.76 |        0.66 |             0.67 |
+| 2011 |          355.00 |                 201.00 |                 0.98 |  116.48 |       0.79 |        0.55 |             0.67 |
+| 2010 |          280.00 |                 148.00 |                 0.96 |  123.59 |       0.75 |        0.64 |             0.65 |
+| 2009 |          375.00 |                 186.00 |                 0.98 |  120.70 |       0.74 |        0.53 |             0.73 |
+| 2008 |          323.00 |                 161.00 |                -0.25 |  118.29 |       0.63 |        0.39 |             0.62 |
+| 2007 |                 |                        |                      |  131.55 |       0.64 |        0.43 |             0.64 |
+| 2006 |          561.00 |                 320.00 |                 0.00 |  112.28 |       0.64 |        0.63 |             0.74 |
+
+** Top 10 tracks of each year
+
+| year | avg_count_words | avg_count_no_stopwords | avg_lyrics_sentiment | avg_bpm | avg_energy | avg_valence | avg_danceability |
+|------+-----------------+------------------------+----------------------+---------+------------+-------------+------------------|
+| 2020 |          325.00 |                 156.00 |                 0.71 |  110.28 |       0.64 |        0.53 |             0.71 |
+| 2019 |          357.00 |                 158.00 |                 0.20 |  123.31 |       0.54 |        0.56 |             0.77 |
+| 2018 |          555.00 |                 335.00 |                 0.43 |  116.07 |       0.59 |        0.50 |             0.68 |
+| 2017 |          345.00 |                 170.00 |                -0.33 |  120.21 |       0.62 |        0.50 |             0.74 |
+| 2016 |          381.00 |                 182.00 |                -0.28 |  123.43 |       0.64 |        0.51 |             0.66 |
+| 2015 |          435.00 |                 214.00 |                -0.17 |  112.53 |       0.64 |        0.54 |             0.68 |
+| 2014 |          435.00 |                 202.00 |                -0.62 |  134.04 |       0.68 |        0.70 |             0.66 |
+| 2013 |          355.00 |                 183.00 |                 0.82 |  118.32 |       0.61 |        0.49 |             0.57 |
+| 2012 |          350.00 |                 157.00 |                -0.06 |  127.08 |       0.78 |        0.62 |             0.63 |
+| 2011 |          466.00 |                 260.00 |                 0.33 |  121.76 |       0.72 |        0.56 |             0.64 |
+| 2010 |          368.00 |                 194.00 |                 0.98 |  125.68 |       0.77 |        0.58 |             0.68 |
+| 2009 |          434.00 |                 209.00 |                 0.32 |  127.48 |       0.71 |        0.54 |             0.69 |
+| 2008 |          387.00 |                 180.00 |                 0.36 |  118.95 |       0.61 |        0.44 |             0.64 |
+| 2007 |          250.00 |                 120.00 |                -0.16 |  133.00 |       0.68 |        0.57 |             0.69 |
+| 2006 |          422.00 |                 226.00 |                 0.32 |  113.16 |       0.57 |        0.60 |             0.73 |
+
+** Top 100 tracks of each year
+
+| year | avg_count_words | avg_count_no_stopwords | avg_lyrics_sentiment | avg_bpm | avg_energy | avg_valence | avg_danceability |
+|------+-----------------+------------------------+----------------------+---------+------------+-------------+------------------|
+| 2020 |          393.00 |                 198.00 |                 0.40 |  118.88 |       0.58 |        0.48 |             0.67 |
+| 2019 |          382.00 |                 193.00 |                 0.55 |  115.45 |       0.58 |        0.48 |             0.70 |
+| 2018 |          411.00 |                 208.00 |                 0.47 |  118.44 |       0.58 |        0.46 |             0.71 |
+| 2017 |          366.00 |                 183.00 |                 0.17 |  118.94 |       0.60 |        0.46 |             0.69 |
+| 2016 |          411.00 |                 195.00 |                 0.19 |  122.80 |       0.65 |        0.48 |             0.64 |
+| 2015 |          381.00 |                 183.00 |                 0.16 |  121.28 |       0.67 |        0.50 |             0.63 |
+| 2014 |          380.00 |                 190.00 |                 0.33 |  126.18 |       0.68 |        0.51 |             0.60 |
+| 2013 |          354.00 |                 175.00 |                 0.39 |  124.26 |       0.70 |        0.52 |             0.62 |
+| 2012 |          343.00 |                 172.00 |                 0.46 |  124.08 |       0.72 |        0.55 |             0.64 |
+| 2011 |          400.00 |                 198.00 |                 0.70 |  126.36 |       0.71 |        0.54 |             0.63 |
+| 2010 |          373.00 |                 182.00 |                 0.73 |  118.77 |       0.70 |        0.54 |             0.63 |
+| 2009 |          399.00 |                 200.00 |                 0.51 |  121.12 |       0.71 |        0.53 |             0.64 |
+| 2008 |          401.00 |                 196.00 |                 0.46 |  127.74 |       0.69 |        0.51 |             0.64 |
+| 2007 |          366.00 |                 174.00 |                 0.40 |  123.47 |       0.71 |        0.54 |             0.63 |
+| 2006 |          407.00 |                 201.00 |                 0.27 |  121.69 |       0.66 |        0.50 |             0.64 |
